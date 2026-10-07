@@ -1,3 +1,6 @@
+# имя задано явно: папка репы в воркспейсе называется project (ADR-0008)
+name: bitrix30
+
 services:
   php:
     build: docker/php
@@ -5,5 +8,4 @@ services:
       - .:/app
     ports:
       - "8030:8030"
-    # встроенный dev-сервер PHP; public/index.php появится на этапе 1
     command: php -S 0.0.0.0:8030 -t public
