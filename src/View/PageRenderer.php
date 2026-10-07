@@ -24,7 +24,11 @@ final class PageRenderer
     /** @param array<string, mixed> $context */
     public function render(string $template, array $context = [], int $status = 200): ResponseInterface
     {
-        $html = $this->stacks->resolve($this->templates->render($template, $context));
+        try {
+            $html = $this->stacks->resolve($this->templates->render($template, $context));
+        } finally {
+            $this->stacks->reset();
+        }
 
         $response = $this->responses->createResponse($status)
             ->withHeader('Content-Type', 'text/html; charset=utf-8');

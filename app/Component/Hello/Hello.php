@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Component\Hello;
 
 use Bitrix30\Component\ComponentInterface;
+use Bitrix30\Component\ComponentTemplates;
 use Bitrix30\View\TemplateRendererInterface;
 
 /**
@@ -14,6 +15,8 @@ use Bitrix30\View\TemplateRendererInterface;
  */
 final class Hello implements ComponentInterface
 {
+    use ComponentTemplates;
+
     public function __construct(
         private readonly TemplateRendererInterface $templates,
     ) {
@@ -28,7 +31,7 @@ final class Hello implements ComponentInterface
     {
         \assert($params instanceof HelloParams);
 
-        return $this->templates->render('@components/Hello/templates/greeting.twig', [
+        return $this->templates->render($this->template('greeting.twig'), [
             'name' => $params->name,
             'mark' => $params->exclaim ? '!' : '.',
         ]);

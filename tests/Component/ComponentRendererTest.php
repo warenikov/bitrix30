@@ -38,12 +38,29 @@ final class ComponentRendererTest extends TestCase
         self::assertStringContainsString('.greeting', $head);
     }
 
-    public function testUnknownParamFailsLoudly(): void
+    public function testUnknownParamFailsLoudlyAndNamesValidOnes(): void
     {
         $renderer = $this->renderer(new StackRegistry());
 
-        $this->expectException(\LogicException::class);
-        $renderer->render('greeting', ['nmae' => 'опечатка']);
+        try {
+            $renderer->render('greeting', ['nmae' => 'опечатка']);
+            self::fail('Ожидали LogicException');
+        } catch (\LogicException $exception) {
+            self::assertStringContainsString('nmae', $exception->getMessage());
+            self::assertStringContainsString('name', $exception->getMessage());
+        }
+    }
+
+    public function testMissingRequiredParamFailsLoudly(): void
+    {
+        $renderer = $this->renderer(new StackRegistry());
+
+        try {
+            $renderer->render('greeting');
+            self::fail('Ожидали LogicException');
+        } catch (\LogicException $exception) {
+            self::assertStringContainsString('name', $exception->getMessage());
+        }
     }
 
     public function testUnknownComponentFailsWithKnownNames(): void

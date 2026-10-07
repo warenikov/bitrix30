@@ -31,8 +31,15 @@ final class StackRegistry
     /** Добавляет фрагмент в стек; `$prepend` — в начало вместо конца. */
     public function push(string $stack, string $content, bool $prepend = false): void
     {
-        $current = $this->stacks[$stack] ?? [];
-        $this->stacks[$stack] = $prepend ? [$content, ...$current] : [...$current, $content];
+        $this->stacks[$stack] ??= [];
+
+        if ($prepend) {
+            array_unshift($this->stacks[$stack], $content);
+
+            return;
+        }
+
+        $this->stacks[$stack][] = $content;
     }
 
     /**
@@ -59,23 +66,38 @@ final class StackRegistry
     /**
      * Заменяет маркеры стеков их содержимым. Вызывается один раз,
      * когда страница отрендерена целиком и все push() уже случились.
+     *
+     * Напушенный фрагмент сам может содержать маркер другого стека
+     * (strtr вставленное не пересканирует), поэтому проходы повторяются;
+     * предел итераций защищает от стека, ссылающегося на самого себя.
      */
     public function resolve(string $html): string
     {
-        if (!str_contains($html, "\x00b30stack:" . $this->token . ':')) {
-            return $html;
-        }
+        $prefix = "\x00b30stack:" . $this->token . ':';
 
         $replacements = [];
         foreach (array_keys($this->stacks) as $stack) {
             $replacements[$this->placeholder($stack)] = implode("\n", $this->stacks[$stack]);
         }
 
-        $html = strtr($html, $replacements);
+        for ($pass = 0; $pass < 5 && str_contains($html, $prefix); ++$pass) {
+            $html = strtr($html, $replacements);
+        }
 
         // маркеры стеков, в которые ничего не напушили
         $pattern = '/\x00b30stack:' . preg_quote($this->token, '/') . ':[^\x00]*\x00/';
 
         return preg_replace($pattern, '', $html) ?? $html;
+    }
+
+    /**
+     * Сбрасывает состояние. Вызывается после resolve() целой страницы:
+     * следующий рендер в том же процессе (worker-mode, письмо, вторая
+     * страница) начинает с чистых стеков и чистой дедупликации.
+     */
+    public function reset(): void
+    {
+        $this->stacks = [];
+        $this->seen = [];
     }
 }

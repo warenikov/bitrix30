@@ -81,7 +81,9 @@ return [
 
         $twig = new Environment($loader, [
             'debug' => $debug,
-            'cache' => $debug ? false : Typed::string($c, 'app.cache_dir') . '/twig',
+            // кеш включён всегда: в dev auto_reload (= debug) перекомпилирует
+            // только изменившиеся шаблоны, и prod-путь всегда прогрет
+            'cache' => Typed::string($c, 'app.cache_dir') . '/twig',
             'strict_variables' => true,
             // yield-рантайм Twig 3.12+; наши узлы написаны под него
             'use_yield' => true,

@@ -37,15 +37,31 @@ final class ParamsMapper
             }
         }
 
-        try {
-            return new $paramsClass(...$params);
-        } catch (\Error $error) {
-            throw new \LogicException(sprintf(
-                'Параметры компонента «%s» не подошли к %s: %s',
-                $componentName,
-                $paramsClass,
-                $error->getMessage(),
-            ), 0, $error);
+        // валидируем привязку аргументов заранее и по именам: тогда ошибка
+        // конструктора самого DTO (если он что-то делает) не маскируется
+        // под «параметры не подошли»
+        $constructor = (new \ReflectionClass($paramsClass))->getConstructor();
+        $known = [];
+        foreach ($constructor?->getParameters() ?? [] as $parameter) {
+            $known[$parameter->getName()] = $parameter;
         }
+
+        $unknown = array_diff_key($params, $known);
+        if ($unknown !== []) {
+            throw new \LogicException(sprintf(
+                'У компонента «%s» нет параметров: %s. Есть: %s.',
+                $componentName,
+                implode(', ', array_keys($unknown)),
+                $known === [] ? '(нет)' : implode(', ', array_keys($known)),
+            ));
+        }
+
+        foreach ($known as $name => $parameter) {
+            if (!$parameter->isOptional() && !\array_key_exists($name, $params)) {
+                throw new \LogicException(sprintf('Компоненту «%s» не передан обязательный параметр «%s».', $componentName, $name));
+            }
+        }
+
+        return new $paramsClass(...$params);
     }
 }

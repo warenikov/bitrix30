@@ -50,6 +50,30 @@ final class StackRegistryTest extends TestCase
         self::assertSame('<link href="/news.css">', $registry->resolve($registry->placeholder('head')));
     }
 
+    public function testNestedPlaceholderInsidePushedContentIsResolved(): void
+    {
+        $registry = new StackRegistry();
+        $html = '<head>' . $registry->placeholder('head') . '</head>';
+
+        // фрагмент в head сам содержит маркер другого стека
+        $registry->push('head', $registry->placeholder('meta') . '<style></style>');
+        $registry->push('meta', '<meta name="x">');
+
+        self::assertSame('<head><meta name="x"><style></style></head>', $registry->resolve($html));
+    }
+
+    public function testResetClearsStacksAndDeduplication(): void
+    {
+        $registry = new StackRegistry();
+        $registry->push('head', 'страница 1');
+        $registry->pushOnce('head', 'id', 'один раз');
+        $registry->reset();
+
+        $registry->pushOnce('head', 'id', 'снова можно');
+
+        self::assertSame('снова можно', $registry->resolve($registry->placeholder('head')));
+    }
+
     public function testForeignMarkersAreNotTouched(): void
     {
         $registry = new StackRegistry();
