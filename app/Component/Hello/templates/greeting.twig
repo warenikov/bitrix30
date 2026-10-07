@@ -1,0 +1,6 @@
+<div class="hello">
+    <p>Привет, {{ name }}{{ mark }}</p>
+    {% push 'scripts' once %}
+    <script>console.log('компонент hello дописал это в конец body через push once');</script>
+    {% endpush %}
+</div>

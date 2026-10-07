@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>bitrix30</title>
+    {# стек head: сюда прилетают CSS компонентов — уже после того, как head отрендерен #}
+    {{ stack('head') }}
+</head>
+<body>
+    <h1>bitrix30</h1>
+    <p>Этап 1: HTTP-ядро, DI, роутинг — и теперь Twig с компонентами.</p>
+
+    {{ component('hello', {name: 'мир'}) }}
+    {{ component('hello', {name: 'Битрикс', exclaim: false}) }}
+
+    {{ stack('scripts') }}
+</body>
+</html>
