@@ -89,10 +89,9 @@ final class RouteConfigurator
      */
     public function add(string $path, array $methods, string|array $handler): RouteDefinition
     {
+        // хвостовой слэш сохраняем как написано: для битриксовых сайтов
+        // канонические URL часто оканчиваются на «/», и «/news/» ≠ «/news»
         $fullPath = $this->currentPrefix . '/' . ltrim($path, '/');
-        if ($fullPath !== '/') {
-            $fullPath = rtrim($fullPath, '/');
-        }
 
         $definition = new RouteDefinition($fullPath, $methods, $handler);
         $this->definitions[] = $definition;
@@ -103,8 +102,18 @@ final class RouteConfigurator
     public function build(): RouteCollection
     {
         $collection = new RouteCollection();
+        $names = [];
         foreach ($this->definitions as $definition) {
-            $collection->add($definition->routeName(), $definition->toRoute());
+            $name = $definition->routeName();
+            if (isset($names[$name])) {
+                // RouteCollection::add() молча перезаписал бы первый роут
+                throw new \LogicException(sprintf(
+                    'Дубль роута «%s»: два объявления дают одно имя — задайте разные через name() или уберите лишнее.',
+                    $name,
+                ));
+            }
+            $names[$name] = true;
+            $collection->add($name, $definition->toRoute());
         }
 
         return $collection;

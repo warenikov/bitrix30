@@ -30,15 +30,12 @@ final class Router
     /** @var array{matcher: array<mixed>, generator: array<mixed>}|null */
     private ?array $compiled = null;
 
-    private RequestContext $context;
-
     /** @param \Closure(): \Symfony\Component\Routing\RouteCollection $loader отложенная сборка коллекции */
     public function __construct(
         private readonly \Closure $loader,
         private readonly string $cacheFile,
         private readonly bool $debug,
     ) {
-        $this->context = new RequestContext();
     }
 
     /**
@@ -52,14 +49,14 @@ final class Router
     public function match(ServerRequestInterface $request): array
     {
         $uri = $request->getUri();
-        $this->context = new RequestContext(
+        $context = new RequestContext(
             '',
             $request->getMethod(),
             $uri->getHost() !== '' ? $uri->getHost() : 'localhost',
             $uri->getScheme() !== '' ? $uri->getScheme() : 'http',
         );
 
-        $matcher = new CompiledUrlMatcher($this->compiled()['matcher'], $this->context);
+        $matcher = new CompiledUrlMatcher($this->compiled()['matcher'], $context);
 
         try {
             /** @var array<string, mixed> $parameters */
@@ -80,11 +77,15 @@ final class Router
     /**
      * Генерирует путь по имени роута: `generate('news.show', ['slug' => 'hello'])`.
      *
+     * Всегда относительный путь с контекстом по умолчанию — без скрытой
+     * зависимости от последнего match(). Абсолютные URL появятся отдельным
+     * API с явным контекстом.
+     *
      * @param array<string, mixed> $parameters
      */
     public function generate(string $name, array $parameters = []): string
     {
-        return (new CompiledUrlGenerator($this->compiled()['generator'], $this->context))
+        return (new CompiledUrlGenerator($this->compiled()['generator'], new RequestContext()))
             ->generate($name, $parameters);
     }
 
@@ -115,18 +116,27 @@ final class Router
         return $this->compiled = $compiled;
     }
 
-    /** @param array{matcher: array<mixed>, generator: array<mixed>} $compiled */
+    /**
+     * Пишет кеш атомарно (tmp + rename). Любой сбой записи — осознанная
+     * деградация: приложение продолжает работать без кеша, компилируя
+     * роуты на каждый запрос, вместо падения или потока warning'ов.
+     *
+     * @param array{matcher: array<mixed>, generator: array<mixed>} $compiled
+     */
     private function writeCache(array $compiled): void
     {
         $dir = \dirname($this->cacheFile);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0o775, true);
+        if (!is_dir($dir) && !@mkdir($dir, 0o775, true) && !is_dir($dir)) {
+            return;
         }
 
-        // атомарная запись: во временный файл + rename, чтобы параллельный
-        // запрос не прочитал полузаписанный кеш
         $tmp = $this->cacheFile . '.' . bin2hex(random_bytes(4)) . '.tmp';
-        file_put_contents($tmp, '<?php return ' . var_export($compiled, true) . ';');
-        rename($tmp, $this->cacheFile);
+        if (@file_put_contents($tmp, '<?php return ' . var_export($compiled, true) . ';') === false) {
+            return;
+        }
+
+        if (!@rename($tmp, $this->cacheFile)) {
+            @unlink($tmp);
+        }
     }
 }

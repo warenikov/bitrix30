@@ -5,5 +5,8 @@ parameters:
     level: max
     paths:
         - src
+        - app
+        - config
+        - public
         - tests
     tmpDir: var/cache/phpstan

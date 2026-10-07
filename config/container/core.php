@@ -10,6 +10,7 @@ declare(strict_types=1);
  * здесь только интерфейсы и сборки со скалярными параметрами.
  */
 
+use Bitrix30\Container\Typed;
 use Bitrix30\Http\ControllerDispatcher;
 use Bitrix30\Http\Kernel;
 use Bitrix30\Http\Middleware\ErrorHandlerMiddleware;
@@ -32,40 +33,35 @@ return [
     LoggerInterface::class => static fn (): LoggerInterface => new NullLogger(),
 
     Router::class => static function (ContainerInterface $c): Router {
-        $projectDir = $c->get('app.project_dir');
-        $cacheDir = $c->get('app.cache_dir');
-        \assert(\is_string($projectDir) && \is_string($cacheDir));
+        $routesDir = Typed::string($c, 'app.project_dir') . '/config/routes';
 
-        $routesDir = $projectDir . '/config/routes';
         $loader = static function () use ($routesDir): RouteCollection {
             $configurator = new RouteConfigurator();
-            foreach (glob($routesDir . '/*.php') ?: [] as $file) {
+            $files = glob($routesDir . '/*.php');
+            foreach ($files === false ? [] : $files as $file) {
                 $configure = require $file;
-                \assert($configure instanceof \Closure);
+                if (!$configure instanceof \Closure) {
+                    throw new \RuntimeException(sprintf('Файл роутов %s должен возвращать closure, получен %s.', $file, get_debug_type($configure)));
+                }
                 $configure($configurator);
             }
 
             return $configurator->build();
         };
 
-        return new Router($loader, $cacheDir . '/routes.php', (bool) $c->get('app.debug'));
+        return new Router($loader, Typed::string($c, 'app.cache_dir') . '/routes.php', Typed::bool($c, 'app.debug'));
     },
 
     ErrorHandlerMiddleware::class => static fn (ContainerInterface $c): ErrorHandlerMiddleware => new ErrorHandlerMiddleware(
-        $c->get(ResponseFactoryInterface::class),
-        $c->get(LoggerInterface::class),
-        (bool) $c->get('app.debug'),
+        Typed::service($c, ResponseFactoryInterface::class),
+        Typed::service($c, LoggerInterface::class),
+        Typed::bool($c, 'app.debug'),
     ),
 
-    MaintenanceMiddleware::class => static function (ContainerInterface $c): MaintenanceMiddleware {
-        $projectDir = $c->get('app.project_dir');
-        \assert(\is_string($projectDir));
-
-        return new MaintenanceMiddleware(
-            $c->get(ResponseFactoryInterface::class),
-            $projectDir . '/var/maintenance.flag',
-        );
-    },
+    MaintenanceMiddleware::class => static fn (ContainerInterface $c): MaintenanceMiddleware => new MaintenanceMiddleware(
+        Typed::service($c, ResponseFactoryInterface::class),
+        Typed::string($c, 'app.project_dir') . '/var/maintenance.flag',
+    ),
 
     ControllerDispatcher::class => static fn (ContainerInterface $c): ControllerDispatcher => new ControllerDispatcher($c),
 
@@ -73,11 +69,11 @@ return [
         [
             // порядок важен: request-id раньше error handler'а,
             // чтобы id попал и в лог ошибки, и на страницу ошибки
-            $c->get(RequestIdMiddleware::class),
-            $c->get(ErrorHandlerMiddleware::class),
-            $c->get(MaintenanceMiddleware::class),
-            $c->get(RouteMatchMiddleware::class),
+            Typed::service($c, RequestIdMiddleware::class),
+            Typed::service($c, ErrorHandlerMiddleware::class),
+            Typed::service($c, MaintenanceMiddleware::class),
+            Typed::service($c, RouteMatchMiddleware::class),
         ],
-        $c->get(ControllerDispatcher::class),
+        Typed::service($c, ControllerDispatcher::class),
     ),
 ];

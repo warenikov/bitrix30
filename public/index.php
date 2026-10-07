@@ -7,6 +7,7 @@ declare(strict_types=1);
  * Здесь только сборка контейнера, запроса и ядра; логика — внутри ядра.
  */
 
+use Bitrix30\Container\Typed;
 use Bitrix30\Http\Kernel;
 use DI\ContainerBuilder;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
@@ -22,11 +23,11 @@ $builder->addDefinitions($projectDir . '/config/app.php');
 $builder->addDefinitions($projectDir . '/config/container/core.php');
 $container = $builder->build();
 
-$psr17Factory = $container->get(Psr17Factory::class);
+$psr17Factory = Typed::service($container, Psr17Factory::class);
 $request = (new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory))
     ->fromGlobals();
 
-$kernel = $container->get(Kernel::class);
+$kernel = Typed::service($container, Kernel::class);
 $response = $kernel->handle($request);
 
 (new SapiEmitter())->emit($response);

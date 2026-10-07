@@ -4,8 +4,12 @@ name: bitrix30
 services:
   php:
     build: docker/php
+    environment:
+      APP_ENV: dev
     volumes:
       - .:/app
     ports:
       - "8030:8030"
-    command: php -S 0.0.0.0:8030 -t public
+    # router-скрипт обязателен: без него встроенный сервер отдаёт свой 404
+    # на любой путь, не являющийся файлом, и фреймворк не вызывается
+    command: php -S 0.0.0.0:8030 -t public public/index.php

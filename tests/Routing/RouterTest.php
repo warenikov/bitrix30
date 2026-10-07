@@ -88,10 +88,32 @@ final class RouterTest extends TestCase
             $routes->get('/news/{slug}', self::class)->name('news.show');
         });
 
-        // контекст для генерации задаётся матчем
-        $router->match(new ServerRequest('GET', 'http://localhost/news/first'));
-
+        // генерация не требует предварительного match()
         self::assertSame('/news/other', $router->generate('news.show', ['slug' => 'other']));
+    }
+
+    public function testPreservesTrailingSlash(): void
+    {
+        $router = $this->router(static function (RouteConfigurator $routes): void {
+            $routes->get('/news/', self::class)->name('news.index');
+        });
+
+        $params = $router->match(new ServerRequest('GET', 'http://localhost/news/'));
+        self::assertSame('news.index', $params['_route']);
+
+        // «/news» и «/news/» — разные URL, редиректов пока нет
+        $this->expectException(NotFoundException::class);
+        $router->match(new ServerRequest('GET', 'http://localhost/news'));
+    }
+
+    public function testDuplicateRouteNamesAreRejected(): void
+    {
+        $routes = new RouteConfigurator();
+        $routes->get('/feed', self::class);
+        $routes->get('/feed', self::class);
+
+        $this->expectException(\LogicException::class);
+        $routes->build();
     }
 
     public function testProductionCacheIsWrittenAndReused(): void

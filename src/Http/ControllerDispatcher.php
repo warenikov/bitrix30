@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Bitrix30\Http;
 
-use Bitrix30\Http\Exception\NotFoundException;
 use Bitrix30\Routing\Router;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -31,7 +30,8 @@ final class ControllerDispatcher implements RequestHandlerInterface
         $handler = $request->getAttribute(Router::HANDLER);
 
         if (!\is_string($handler) && !\is_array($handler)) {
-            throw new NotFoundException('Запрос дошёл до диспетчера без обработчика: конвейер без RouteMatchMiddleware?');
+            // это поломка конвейера (500), а не «страница не найдена»
+            throw new \LogicException('Запрос дошёл до диспетчера без обработчика: конвейер без RouteMatchMiddleware?');
         }
 
         [$class, $method] = \is_array($handler) ? $handler : [$handler, '__invoke'];

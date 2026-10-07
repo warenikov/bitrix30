@@ -6,10 +6,13 @@ declare(strict_types=1);
  * Базовые параметры приложения. Значения берутся из ENV
  * (задаются в compose.yaml локально и в окружении прода),
  * секретов здесь нет и быть не должно.
+ *
+ * Безопасный дефолт — prod без debug: окружение, забывшее задать
+ * APP_ENV, не должно светить трейсы наружу.
  */
 
-$env = $_SERVER['APP_ENV'] ?? 'dev';
-$env = \is_string($env) ? $env : 'dev';
+$env = $_SERVER['APP_ENV'] ?? 'prod';
+$env = \is_string($env) ? $env : 'prod';
 
 $debugRaw = $_SERVER['APP_DEBUG'] ?? ($env === 'dev' ? '1' : '0');
 
