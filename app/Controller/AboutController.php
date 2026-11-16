@@ -16,6 +16,6 @@ final class AboutController
 
     public function __invoke(): ResponseInterface
     {
-        return $this->pages->render('@site/about.twig', ['title' => 'О фреймворке']);
+        return $this->pages->render('@site/about.twig', ['title' => 'О проекте bitrix30']);
     }
 }

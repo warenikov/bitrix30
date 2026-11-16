@@ -16,6 +16,17 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 
 require \dirname(__DIR__) . '/vendor/autoload.php';
 
+// Встроенный сервер должен сам отдать существующий публичный ассет;
+// остальные пути продолжают идти через front controller.
+if (PHP_SAPI === 'cli-server') {
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    $path = \is_string($requestUri) ? parse_url($requestUri, \PHP_URL_PATH) : false;
+    $isPublicAsset = \is_string($path) && ($path === '/favicon.svg' || str_starts_with($path, '/assets/'));
+    if ($isPublicAsset && is_file(__DIR__ . $path)) {
+        return false;
+    }
+}
+
 $projectDir = \dirname(__DIR__);
 
 $builder = new ContainerBuilder();
