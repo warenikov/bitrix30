@@ -21,6 +21,8 @@ use Bitrix30\Http\Middleware\RequestIdMiddleware;
 use Bitrix30\Http\Middleware\RouteMatchMiddleware;
 use Bitrix30\Routing\RouteConfigurator;
 use Bitrix30\Routing\Router;
+use Bitrix30\Site\Site;
+use Bitrix30\Site\SiteRegistry;
 use Bitrix30\View\TemplateRendererInterface;
 use Bitrix30\View\Twig\Bitrix30Extension;
 use Bitrix30\View\TwigRenderer;
@@ -43,7 +45,7 @@ return [
     Router::class => static function (ContainerInterface $c): Router {
         $routesDir = Typed::string($c, 'app.project_dir') . '/config/routes';
 
-        $loader = static function () use ($routesDir): RouteCollection {
+        $loader = static function () use ($routesDir, $c): RouteCollection {
             $configurator = new RouteConfigurator();
             $files = glob($routesDir . '/*.php');
             foreach ($files === false ? [] : $files as $file) {
@@ -53,6 +55,8 @@ return [
                 }
                 $configure($configurator);
             }
+
+            Typed::service($c, SiteRegistry::class)->configureRoutes($configurator);
 
             return $configurator->build();
         };
@@ -75,7 +79,15 @@ return [
         $projectDir = Typed::string($c, 'app.project_dir');
         $debug = Typed::bool($c, 'app.debug');
 
-        $loader = new FilesystemLoader($projectDir . '/app/templates');
+        $loader = new FilesystemLoader();
+        $sites = Typed::service($c, SiteRegistry::class);
+        foreach ($sites->pagesDirectories() as $directory) {
+            if (is_dir($directory)) {
+                $loader->addPath($directory, 'site');
+            }
+        }
+        $loader->addPath($sites->layout()->templatesDirectory(), 'layout');
+
         // шаблоны компонентов: @components/<Имя>/templates/…
         $loader->addPath($projectDir . '/app/Component', 'components');
 
@@ -97,6 +109,15 @@ return [
     TemplateRendererInterface::class => static fn (ContainerInterface $c): TemplateRendererInterface => new TwigRenderer(
         Typed::service($c, Environment::class),
     ),
+
+    SiteRegistry::class => static function (ContainerInterface $c): SiteRegistry {
+        $siteClass = Typed::string($c, 'app.site');
+        if (!is_a($siteClass, Site::class, true)) {
+            throw new \RuntimeException(sprintf('Параметр app.site должен содержать класс, наследующий %s.', Site::class));
+        }
+
+        return new SiteRegistry($c, $siteClass);
+    },
 
     ComponentRegistry::class => static function (ContainerInterface $c): ComponentRegistry {
         $file = Typed::string($c, 'app.project_dir') . '/config/components.php';
