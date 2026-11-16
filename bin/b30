@@ -1,0 +1,23 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Bitrix30\Console\RoutesListCommand;
+use Bitrix30\Container\Typed;
+use DI\ContainerBuilder;
+use Symfony\Component\Console\Application;
+
+require \dirname(__DIR__) . '/vendor/autoload.php';
+
+$projectDir = \dirname(__DIR__);
+
+$builder = new ContainerBuilder();
+$builder->addDefinitions($projectDir . '/config/app.php');
+$builder->addDefinitions($projectDir . '/config/container/core.php');
+$container = $builder->build();
+
+$application = new Application('bitrix30');
+$application->add(Typed::service($container, RoutesListCommand::class));
+
+exit($application->run());
