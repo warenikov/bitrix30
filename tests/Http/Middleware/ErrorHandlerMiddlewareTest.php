@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix30\Tests\Http\Middleware;
 
+use Bitrix30\Http\Error\ProdErrorPageRenderer;
+use Bitrix30\Http\Error\WhoopsErrorPageRenderer;
 use Bitrix30\Http\Exception\MethodNotAllowedException;
 use Bitrix30\Http\Middleware\ErrorHandlerMiddleware;
 use Bitrix30\Http\Middleware\RequestIdMiddleware;
@@ -19,7 +21,7 @@ final class ErrorHandlerMiddlewareTest extends TestCase
 {
     public function testPassesThroughSuccessfulResponse(): void
     {
-        $middleware = new ErrorHandlerMiddleware(new Psr17Factory(), new NullLogger(), false);
+        $middleware = $this->middleware(false);
 
         $response = $middleware->process(
             new ServerRequest('GET', '/'),
@@ -31,7 +33,7 @@ final class ErrorHandlerMiddlewareTest extends TestCase
 
     public function testMapsHttpExceptionToStatusAndHeaders(): void
     {
-        $middleware = new ErrorHandlerMiddleware(new Psr17Factory(), new NullLogger(), false);
+        $middleware = $this->middleware(false);
 
         $response = $middleware->process(
             new ServerRequest('GET', '/'),
@@ -46,7 +48,7 @@ final class ErrorHandlerMiddlewareTest extends TestCase
 
     public function testGenericExceptionBecomes500WithoutDetailsInProd(): void
     {
-        $middleware = new ErrorHandlerMiddleware(new Psr17Factory(), new NullLogger(), false);
+        $middleware = $this->middleware(false);
 
         $response = $middleware->process(
             new ServerRequest('GET', '/'),
@@ -61,7 +63,7 @@ final class ErrorHandlerMiddlewareTest extends TestCase
 
     public function testDebugModeShowsExceptionDetailsAndRequestId(): void
     {
-        $middleware = new ErrorHandlerMiddleware(new Psr17Factory(), new NullLogger(), true);
+        $middleware = $this->middleware(true);
 
         $request = (new ServerRequest('GET', '/'))->withAttribute(RequestIdMiddleware::ATTRIBUTE, 'abc123');
         $response = $middleware->process(
@@ -75,6 +77,15 @@ final class ErrorHandlerMiddlewareTest extends TestCase
         self::assertStringContainsString('RuntimeException', $body);
         self::assertStringContainsString('что-то упало', $body);
         self::assertStringContainsString('abc123', $body);
+    }
+
+    private function middleware(bool $debug): ErrorHandlerMiddleware
+    {
+        return new ErrorHandlerMiddleware(
+            new Psr17Factory(),
+            new NullLogger(),
+            $debug ? new WhoopsErrorPageRenderer() : new ProdErrorPageRenderer(),
+        );
     }
 
     /** @param \Closure(): ResponseInterface $respond */

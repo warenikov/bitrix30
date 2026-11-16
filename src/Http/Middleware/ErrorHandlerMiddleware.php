@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix30\Http\Middleware;
 
+use Bitrix30\Http\Error\ErrorPageRendererInterface;
 use Bitrix30\Http\Exception\HttpException;
-use Bitrix30\Http\Middleware\RequestIdMiddleware;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,15 +17,15 @@ use Psr\Log\LoggerInterface;
  * Последний рубеж: любое исключение ниже по конвейеру превращается в HTTP-ответ.
  *
  * HttpException отдаёт свой статус и заголовки, остальное — 500.
- * 5xx логируются как error, 4xx — как notice. В debug-режиме в ответ
- * попадает класс исключения и трейс, в prod — только статус и request id.
+ * 5xx логируются как error, 4xx — как notice. HTML зависит от окружения:
+ * Whoops в dev, только статус и request id в prod.
  */
 final class ErrorHandlerMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly ResponseFactoryInterface $responseFactory,
         private readonly LoggerInterface $logger,
-        private readonly bool $debug,
+        private readonly ErrorPageRendererInterface $errorPages,
     ) {
     }
 
@@ -50,7 +50,6 @@ final class ErrorHandlerMiddleware implements MiddlewareInterface
             [
                 'exception' => $exception,
                 'status' => $status,
-                'request_id' => $requestId,
                 'method' => $request->getMethod(),
                 'path' => $request->getUri()->getPath(),
             ],
@@ -66,29 +65,8 @@ final class ErrorHandlerMiddleware implements MiddlewareInterface
             }
         }
 
-        $response->getBody()->write($this->renderBody($exception, $status, $requestId));
+        $response->getBody()->write($this->errorPages->render($exception, $status, $requestId));
 
         return $response;
-    }
-
-    private function renderBody(\Throwable $exception, int $status, ?string $requestId): string
-    {
-        $title = sprintf('Ошибка %d', $status);
-        $idLine = $requestId !== null
-            ? sprintf('<p>Request ID: <code>%s</code></p>', htmlspecialchars($requestId, \ENT_QUOTES))
-            : '';
-
-        if (!$this->debug) {
-            return sprintf('<h1>%s</h1>%s', $title, $idLine);
-        }
-
-        return sprintf(
-            '<h1>%s</h1>%s<h2>%s: %s</h2><pre>%s</pre>',
-            $title,
-            $idLine,
-            htmlspecialchars($exception::class, \ENT_QUOTES),
-            htmlspecialchars($exception->getMessage(), \ENT_QUOTES),
-            htmlspecialchars($exception->getTraceAsString(), \ENT_QUOTES),
-        );
     }
 }

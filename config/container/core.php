@@ -15,10 +15,14 @@ use Bitrix30\Component\ComponentRegistry;
 use Bitrix30\Container\Typed;
 use Bitrix30\Http\ControllerDispatcher;
 use Bitrix30\Http\Kernel;
+use Bitrix30\Http\Error\ErrorPageRendererInterface;
+use Bitrix30\Http\Error\ProdErrorPageRenderer;
+use Bitrix30\Http\Error\WhoopsErrorPageRenderer;
 use Bitrix30\Http\Middleware\ErrorHandlerMiddleware;
 use Bitrix30\Http\Middleware\MaintenanceMiddleware;
 use Bitrix30\Http\Middleware\RequestIdMiddleware;
 use Bitrix30\Http\Middleware\RouteMatchMiddleware;
+use Bitrix30\Log\RequestIdProcessor;
 use Bitrix30\Routing\RouteConfigurator;
 use Bitrix30\Routing\Router;
 use Bitrix30\Site\Site;
@@ -30,7 +34,10 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use Monolog\Formatter\JsonFormatter;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Symfony\Component\Routing\RouteCollection;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -39,8 +46,18 @@ use Twig\RuntimeLoader\ContainerRuntimeLoader;
 return [
     ResponseFactoryInterface::class => static fn (Psr17Factory $factory): ResponseFactoryInterface => $factory,
 
-    // Monolog приедет следующей подсистемой этапа 1; до него — заглушка
-    LoggerInterface::class => static fn (): LoggerInterface => new NullLogger(),
+    LoggerInterface::class => static function (ContainerInterface $c): LoggerInterface {
+        $handler = new StreamHandler('php://stdout');
+        $handler->setFormatter(Typed::bool($c, 'app.debug')
+            ? new LineFormatter(null, null, true, true, true)
+            : new JsonFormatter());
+
+        $logger = new Logger('bitrix30');
+        $logger->pushHandler($handler);
+        $logger->pushProcessor(Typed::service($c, RequestIdProcessor::class));
+
+        return $logger;
+    },
 
     Router::class => static function (ContainerInterface $c): Router {
         $routesDir = Typed::string($c, 'app.project_dir') . '/config/routes';
@@ -64,10 +81,14 @@ return [
         return new Router($loader, Typed::string($c, 'app.cache_dir') . '/routes.php', Typed::bool($c, 'app.debug'));
     },
 
+    ErrorPageRendererInterface::class => static fn (ContainerInterface $c): ErrorPageRendererInterface => Typed::bool($c, 'app.debug')
+        ? new WhoopsErrorPageRenderer()
+        : new ProdErrorPageRenderer(),
+
     ErrorHandlerMiddleware::class => static fn (ContainerInterface $c): ErrorHandlerMiddleware => new ErrorHandlerMiddleware(
         Typed::service($c, ResponseFactoryInterface::class),
         Typed::service($c, LoggerInterface::class),
-        Typed::bool($c, 'app.debug'),
+        Typed::service($c, ErrorPageRendererInterface::class),
     ),
 
     MaintenanceMiddleware::class => static fn (ContainerInterface $c): MaintenanceMiddleware => new MaintenanceMiddleware(
