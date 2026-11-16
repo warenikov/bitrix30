@@ -89,6 +89,12 @@ final class Router
             ->generate($name, $parameters);
     }
 
+    /** Исходная коллекция роутов для консоли и диагностики. */
+    public function routes(): \Symfony\Component\Routing\RouteCollection
+    {
+        return ($this->loader)();
+    }
+
     /** @return array{matcher: array<mixed>, generator: array<mixed>} */
     private function compiled(): array
     {
