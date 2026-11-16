@@ -10,6 +10,11 @@ declare(strict_types=1);
  * здесь только интерфейсы и сборки со скалярными параметрами.
  */
 
+use Bitrix30\Admin\AdminAccess;
+use Bitrix30\Admin\AdminAuthMiddleware;
+use Bitrix30\Admin\ModuleInterface;
+use Bitrix30\Admin\ModuleRegistry;
+use App\Admin\DashboardController;
 use Bitrix30\Component\ComponentInterface;
 use Bitrix30\Component\ComponentRegistry;
 use Bitrix30\Container\Typed;
@@ -59,6 +64,31 @@ return [
         return $logger;
     },
 
+    AdminAccess::class => static fn (ContainerInterface $c): AdminAccess => new AdminAccess(
+        Typed::string($c, 'admin.email'),
+        Typed::string($c, 'admin.password_hash'),
+    ),
+
+    ModuleRegistry::class => static function (ContainerInterface $c): ModuleRegistry {
+        $file = Typed::string($c, 'app.project_dir') . '/config/modules.php';
+        $classes = is_file($file) ? require $file : [];
+        if (!\is_array($classes) || !array_is_list($classes)) {
+            throw new \RuntimeException('config/modules.php должен возвращать список классов модулей.');
+        }
+
+        /** @var list<class-string<ModuleInterface>> $classes */
+        return new ModuleRegistry($c, $classes);
+    },
+
+    DashboardController::class => static fn (ContainerInterface $c): DashboardController => new DashboardController(
+        Typed::service($c, TemplateRendererInterface::class),
+        Typed::service($c, ResponseFactoryInterface::class),
+        Typed::service($c, ModuleRegistry::class),
+        Typed::service($c, SiteRegistry::class),
+        Typed::service($c, Router::class),
+        Typed::string($c, 'app.env'),
+    ),
+
     Router::class => static function (ContainerInterface $c): Router {
         $routesDir = Typed::string($c, 'app.project_dir') . '/config/routes';
 
@@ -107,6 +137,7 @@ return [
                 $loader->addPath($directory, 'site');
             }
         }
+        $loader->addPath($projectDir . '/app/Admin/templates', 'admin');
         $loader->addPath($sites->layout()->templatesDirectory(), 'layout');
 
         // шаблоны компонентов: @components/<Имя>/templates/…
@@ -160,6 +191,7 @@ return [
             Typed::service($c, RequestIdMiddleware::class),
             Typed::service($c, ErrorHandlerMiddleware::class),
             Typed::service($c, MaintenanceMiddleware::class),
+            Typed::service($c, AdminAuthMiddleware::class),
             Typed::service($c, RouteMatchMiddleware::class),
         ],
         Typed::service($c, ControllerDispatcher::class),

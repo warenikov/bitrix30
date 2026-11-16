@@ -6,6 +6,8 @@ services:
     build: docker/php
     environment:
       APP_ENV: dev
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
     volumes:
       - .:/app
     ports:

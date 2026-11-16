@@ -30,4 +30,6 @@ return [
     'app.project_dir' => \dirname(__DIR__),
     'app.cache_dir' => \dirname(__DIR__) . '/var/cache',
     'app.site' => LandingSite::class,
+    'admin.email' => $readEnv('ADMIN_EMAIL') ?? '',
+    'admin.password_hash' => $readEnv('ADMIN_PASSWORD_HASH') ?? '',
 ];

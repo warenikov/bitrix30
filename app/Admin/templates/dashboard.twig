@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>bitrix30 · Admin</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root { color-scheme: light; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #19221c; background: #f2f4ef; }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        a { color: inherit; }
+        a:focus-visible { outline: 3px solid #7b9d4d; outline-offset: 3px; }
+        header { color: #f4f8f2; background: #17221a; }
+        .header { display: flex; align-items: center; justify-content: space-between; max-width: 1180px; min-height: 68px; margin: auto; padding: 0 24px; }
+        .brand { font-family: monospace; font-size: 19px; font-weight: 700; }
+        .badge { padding: 5px 9px; color: #d9f7a7; border: 1px solid #4c6049; border-radius: 6px; font-family: monospace; font-size: 12px; }
+        main { max-width: 1180px; margin: auto; padding: 46px 24px 64px; }
+        .lead { margin: 0 0 38px; }
+        h1 { margin: 0 0 10px; font-size: 38px; letter-spacing: -.04em; }
+        .lead p { margin: 0; color: #68736b; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        section { padding: 24px; background: #fff; border: 1px solid #dce2d9; border-radius: 12px; }
+        h2 { margin: 0 0 20px; font-size: 17px; }
+        dl { margin: 0; }
+        dl div { display: grid; grid-template-columns: 100px 1fr; gap: 16px; padding: 10px 0; border-bottom: 1px solid #edf0eb; }
+        dt { color: #788178; }
+        dd { margin: 0; font-family: monospace; font-size: 13px; overflow-wrap: anywhere; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th { padding: 0 12px 12px 0; color: #788178; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+        td { padding: 13px 12px 13px 0; border-top: 1px solid #edf0eb; vertical-align: top; }
+        td code { font-size: 12px; overflow-wrap: anywhere; }
+        .method { display: inline-block; padding: 3px 6px; color: #375223; background: #e8f4d8; border-radius: 4px; font-family: monospace; font-size: 11px; }
+        .muted { color: #788178; }
+        @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } main { padding: 30px 16px; } section { padding: 18px; overflow-x: auto; } h1 { font-size: 31px; } .header { padding: 0 16px; } }
+    </style>
+</head>
+<body>
+<header><div class="header"><span class="brand">bitrix30 / admin</span><span class="badge">read-only v0</span></div></header>
+<main>
+    <div class="lead"><h1>Состояние системы</h1><p>Модули, наследование сайтов и маршруты в одном месте.</p></div>
+    <div class="grid">
+        <section>
+            <h2>Окружение и сайты</h2>
+            <dl>
+                <div><dt>Environment</dt><dd>{{ environment }}</dd></div>
+                {% for class in siteClasses %}
+                    <div><dt>{{ loop.first ? 'Active site' : 'Parent' }}</dt><dd>{{ class }}</dd></div>
+                {% endfor %}
+            </dl>
+        </section>
+        <section>
+            <h2>Модули</h2>
+            <table>
+                <thead><tr><th>Ключ</th><th>Название</th><th>Версия</th></tr></thead>
+                <tbody>{% for module in modules %}<tr><td><code>{{ module.key }}</code></td><td>{{ module.name }}</td><td>{{ module.version }}</td></tr>{% endfor %}</tbody>
+            </table>
+        </section>
+    </div>
+    <section>
+        <h2>Маршруты</h2>
+        <table>
+            <thead><tr><th>Имя</th><th>Методы</th><th>Путь</th><th>Обработчик</th></tr></thead>
+            <tbody>
+            {% for name, route in routes %}
+                <tr>
+                    <td><code>{{ name }}</code></td>
+                    <td>{% set methods = route.methods %}<span class="method">{{ methods ? methods|join('|') : 'ANY' }}</span></td>
+                    <td><code>{{ route.path }}</code></td>
+                    <td>{% set handler = route.default(handlerKey) %}{% if handler is iterable %}<code>{{ handler|join('::') }}</code>{% else %}<code>{{ handler }}</code>{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>
