@@ -22,9 +22,12 @@ $readEnv = static function (string $name): ?string {
 $env = $readEnv('APP_ENV') ?? 'prod';
 $debugRaw = $readEnv('APP_DEBUG') ?? ($env === 'dev' ? '1' : '0');
 
+use App\Site\LandingSite;
+
 return [
     'app.env' => $env,
     'app.debug' => $debugRaw === '1' || $debugRaw === 'true',
     'app.project_dir' => \dirname(__DIR__),
     'app.cache_dir' => \dirname(__DIR__) . '/var/cache',
+    'app.site' => LandingSite::class,
 ];

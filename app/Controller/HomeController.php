@@ -18,6 +18,6 @@ final class HomeController
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->pages->render('home.twig');
+        return $this->pages->render('@site/home.twig', ['title' => 'bitrix30 — дочерний сайт']);
     }
 }
