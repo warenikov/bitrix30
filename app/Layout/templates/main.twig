@@ -2,13 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ page.description ?? 'Современный PHP-фреймворк с битриксовыми концепциями: компоненты, сайты с наследованием и готовые решения.' }}">
     <title>{{ page.title ?? siteName }}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/main.css">
     {{ stack('head') }}
 </head>
 <body>
-    <header>{{ siteName }}</header>
-    <main>{{ content }}</main>
-    <footer>Сайты, наследование и layouts</footer>
-    {{ stack('scripts') }}
+<a class="skip-link" href="#content">К содержимому</a>
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="site-header__logo" href="/">{{ siteName }}</a>
+        <nav class="site-header__nav" aria-label="Основная навигация">
+            <a href="/#capabilities">Возможности</a>
+            <a href="/#roadmap">Roadmap</a>
+            <a href="/about">О проекте</a>
+            <a class="site-header__github" href="https://github.com/warenikov/bitrix30">GitHub ↗</a>
+        </nav>
+    </div>
+</header>
+<main id="content">{{ content }}</main>
+<footer class="site-footer">
+    <div class="container site-footer__inner">
+        <p>{{ siteName }} · PHP 8.3 · MIT · не аффилирован с ООО «1С-Битрикс»</p>
+        <div class="site-footer__links">
+            <a href="https://t.me/bitrixcookbook">Bitrix Cookbook</a>
+            <a href="https://github.com/warenikov/bitrix30">GitHub</a>
+        </div>
+    </div>
+</footer>
+{{ stack('scripts') }}
 </body>
 </html>

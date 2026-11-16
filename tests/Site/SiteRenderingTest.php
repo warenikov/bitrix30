@@ -25,7 +25,7 @@ final class SiteRenderingTest extends TestCase
 
         $html = $twig->getLoader()->getSourceContext('@site/home.twig')->getCode();
 
-        self::assertStringContainsString('Дочерний сайт переопределил главную страницу', $html);
+        self::assertStringContainsString('Laravel, только БУС', $html);
         self::assertStringNotContainsString('Базовый сайт', $html);
     }
 
@@ -44,9 +44,9 @@ final class SiteRenderingTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('<title>О фреймворке</title>', $html);
-        self::assertStringContainsString('<header>bitrix30</header>', $html);
+        self::assertStringContainsString('class="site-header__logo"', $html);
         self::assertStringContainsString('Эта страница унаследована дочерним сайтом без изменений.', $html);
-        self::assertStringContainsString('<footer>Сайты, наследование и layouts</footer>', $html);
+        self::assertStringContainsString('Bitrix Cookbook', $html);
     }
 
     private function twig(StackRegistry $stacks): Environment

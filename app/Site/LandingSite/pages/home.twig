@@ -1,5 +1,88 @@
-<h1>bitrix30</h1>
-<p>Дочерний сайт переопределил главную страницу и унаследовал layout.</p>
+{{ component('hero', {
+    title: 'Laravel, только БУС',
+    lead: 'Современный PHP-фреймворк с битриксовыми концепциями: компоненты, сайты с наследованием, решения и контент-модель без ручного SQL.'
+}) }}
 
-{{ component('hello', {name: 'мир'}) }}
-{{ component('hello', {name: 'Битрикс', exclaim: false}) }}
+<section class="section" id="capabilities">
+    <div class="container">
+        <div class="section__heading">
+            <p class="section__kicker">Уже работает</p>
+            <h2 class="section__title">Знакомые идеи.<br>Современный фундамент.</h2>
+            <p class="section__lead">Стандартные слои собираем из зрелых PSR-пакетов. Свой код — только там, где начинаются битриксовые концепции.</p>
+        </div>
+        <div class="feature-grid">
+            <article class="feature-card">
+                <span class="feature-card__number">01 / HTTP</span>
+                <h3 class="feature-card__title">PSR с первого файла</h3>
+                <p class="feature-card__text">PSR-7/15/17, middleware, PHP-DI и роутинг поверх Symfony. Конструкторная инъекция вместо статического Context.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-card__number">02 / VIEW</span>
+                <h3 class="feature-card__title">Twig и компоненты</h3>
+                <p class="feature-card__text">Контроллер, typed DTO, шаблоны и авто-ассеты. CSS и JS попадают в стеки после рендера страницы.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-card__number">03 / SITES</span>
+                <h3 class="feature-card__title">Сайты с наследованием</h3>
+                <p class="feature-card__text">Дочерний сайт явно указывает родителя и заменяет только нужные страницы. Layout и роуты наследуются.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-card__number">04 / LOGS</span>
+                <h3 class="feature-card__title">Ошибки без слепых зон</h3>
+                <p class="feature-card__text">Monolog с request-id в каждой записи. Whoops для разработчика, безопасная страница и JSON-лог для прода.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-card__number">05 / CLI</span>
+                <h3 class="feature-card__title">Консоль bin/b30</h3>
+                <p class="feature-card__text">Symfony Console на общем DI-контейнере. Уже умеет показывать роуты конфигов и активного сайта.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-card__number">06 / QUALITY</span>
+                <h3 class="feature-card__title">Качество по умолчанию</h3>
+                <p class="feature-card__text">PHPUnit, PHPStan max + strict, CS Fixer, composer audit и CI. Docker-first: локальный PHP не нужен.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="section section_dark">
+    <div class="container architecture">
+        <div class="section__heading">
+            <p class="section__kicker">Принцип</p>
+            <h2 class="section__title">Не изобретать.<br>Собирать.</h2>
+            <p class="section__lead">Инфраструктура — из стандартных пакетов. Дифференциатор — битриксовый UX разработки.</p>
+        </div>
+        <div class="layer-list">
+            <div class="layer"><span class="layer__name">PSR / Symfony</span><span class="layer__text">HTTP, DI, роутинг, консоль — зрелая инфраструктура без своего велосипеда.</span></div>
+            <div class="layer"><span class="layer__name">Twig / Monolog</span><span class="layer__text">Шаблоны и наблюдаемость с тонкой склейкой под нужды фреймворка.</span></div>
+            <div class="layer"><span class="layer__name">bitrix30</span><span class="layer__text">Компоненты, сайты, layouts, будущие Solutions и контент-модель.</span></div>
+            <div class="layer"><span class="layer__name">app/</span><span class="layer__text">Код конкретного сайта поверх ядра, без правок vendor и форков пакетов.</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="roadmap">
+    <div class="container">
+        <div class="section__heading">
+            <p class="section__kicker">Дорожная карта</p>
+            <h2 class="section__title">От визитки к магазину.</h2>
+            <p class="section__lead">Этап считается закрытым только после запуска живого сайта. Никакого вечного фреймворка в вакууме.</p>
+        </div>
+        <ol class="roadmap">
+            <li class="roadmap__step roadmap__step_done"><span class="roadmap__status">Сейчас</span><span class="roadmap__title">Визитка</span><span class="roadmap__text">Ядро, Twig, компоненты, сайты, логи, консоль.</span></li>
+            <li class="roadmap__step"><span class="roadmap__status">Этап 2</span><span class="roadmap__title">Новости</span><span class="roadmap__text">Контент-модель, ЧПУ, кеш, SEO и первое Solution.</span></li>
+            <li class="roadmap__step"><span class="roadmap__status">Этап 3</span><span class="roadmap__title">Каталог</span><span class="roadmap__text">Свойства, связи, фильтры, поиск и админка.</span></li>
+            <li class="roadmap__step"><span class="roadmap__status">Этап 4</span><span class="roadmap__title">Магазин</span><span class="roadmap__text">Корзина, заказы, оплата, события и письма.</span></li>
+        </ol>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container cta__inner">
+        <h2 class="cta__title">Следим за разработкой в открытую.</h2>
+        <div class="cta__links">
+            <a class="btn btn_dark" href="https://github.com/warenikov/bitrix30">GitHub ↗</a>
+            <a class="cta__telegram" href="https://t.me/bitrixcookbook">Telegram-канал ↗</a>
+        </div>
+    </div>
+</section>

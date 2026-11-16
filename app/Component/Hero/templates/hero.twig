@@ -1,0 +1,27 @@
+<section class="hero">
+    <div class="container hero__grid">
+        <div class="hero__content">
+            <p class="hero__eyebrow">{{ versionLabel }} · open source · MIT</p>
+            <h1 class="hero__title">{{ title }}</h1>
+            <p class="hero__lead">{{ lead }}</p>
+            <div class="hero__actions">
+                <a class="btn btn_primary" href="https://github.com/warenikov/bitrix30">Смотреть на GitHub</a>
+                <a class="btn btn_default" href="#capabilities">Что уже работает</a>
+            </div>
+        </div>
+        <div class="code-window hero__code" aria-label="Пример наследования сайта">
+            <div class="code-window__bar">
+                <span></span><span></span><span></span>
+                <code>LandingSite.php</code>
+            </div>
+            <pre><code><span class="code-keyword">final class</span> <span class="code-class">LandingSite</span> <span class="code-keyword">extends</span> <span class="code-class">AppSite</span>
+{
+    <span class="code-keyword">public static function</span> <span class="code-function">parentSite</span>(): <span class="code-class">string</span>
+    {
+        <span class="code-keyword">return</span> <span class="code-class">AppSite</span>::<span class="code-keyword">class</span>;
+    }
+}</code></pre>
+            <div class="code-window__status"><span></span> Наследование без магии</div>
+        </div>
+    </div>
+</section>
