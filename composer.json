@@ -6,6 +6,7 @@
     "require": {
         "php": "^8.3",
         "laminas/laminas-httphandlerrunner": "^2.14",
+        "monolog/monolog": "^3.0",
         "nyholm/psr7": "^1.8",
         "nyholm/psr7-server": "^1.1",
         "php-di/php-di": "^7.1",
@@ -35,6 +36,7 @@
         "sort-packages": true
     },
     "require-dev": {
+        "filp/whoops": "^2.18",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.3",
         "phpstan/phpstan-strict-rules": "^2.1",

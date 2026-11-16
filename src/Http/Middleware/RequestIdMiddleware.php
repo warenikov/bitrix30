@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix30\Http\Middleware;
 
+use Bitrix30\Log\RequestIdContext;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,11 +24,22 @@ final class RequestIdMiddleware implements MiddlewareInterface
 
     public const HEADER = 'X-Request-Id';
 
+    public function __construct(
+        private readonly RequestIdContext $context,
+    ) {
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $requestId = bin2hex(random_bytes(8));
 
-        $response = $handler->handle($request->withAttribute(self::ATTRIBUTE, $requestId));
+        $this->context->set($requestId);
+
+        try {
+            $response = $handler->handle($request->withAttribute(self::ATTRIBUTE, $requestId));
+        } finally {
+            $this->context->reset();
+        }
 
         return $response->withHeader(self::HEADER, $requestId);
     }
